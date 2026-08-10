@@ -16,6 +16,7 @@ export type Dictionary = {
     chatTitle: string;
     chatEmpty: string;
     chatPlaceholder: string;
+    thinking: string;
     exampleLabel: string;
     exampleText: string;
     cannedReply: string;
@@ -26,6 +27,10 @@ export type Dictionary = {
     senderSection: string;
     shipmentSection: string;
     fields: string[];
+    sendShipment: string;
+    shipmentSentMessage: string;
+    receiptTitle: string;
+    newShipment: string;
   };
   howItWorks: {
     title: string;
@@ -53,9 +58,10 @@ export const dictionaries: Record<Locale, Dictionary> = {
       chatTitle: "Chat with the agent",
       chatEmpty: "Tell the agent what you're trying to fill out.",
       chatPlaceholder: "Type a message...",
+      thinking: "Thinking",
       exampleLabel: "Example",
       exampleText:
-        "Shipping clothes to John Doe in the US, zip code 10001, at 123 Main St. Contact +1 212 555 0100. Worth about 2000 baht, weighs 5 lbs.",
+        "Shipping clothes to John Dear in the US, zip code 10001, at 123 Main St. Contact +1 212 555 0100. Worth about 2000 baht, weighs 5 lbs.",
       cannedReply: "Got it — I'll factor that into the form.",
       quotaExceededReply:
         "The assistant has hit its usage limit for now. Please try again in a few minutes.",
@@ -79,6 +85,10 @@ export const dictionaries: Record<Locale, Dictionary> = {
         "Weight (kg)",
         "Declared value (THB)",
       ],
+      sendShipment: "Send shipment",
+      shipmentSentMessage: "Shipment sent. You're all set.",
+      receiptTitle: "Shipment receipt",
+      newShipment: "Create another shipment",
     },
     howItWorks: {
       title: "How it works",
@@ -137,9 +147,10 @@ export const dictionaries: Record<Locale, Dictionary> = {
       chatTitle: "คุยกับ Agent",
       chatEmpty: "บอก agent ว่าคุณอยากกรอกฟอร์มอะไร",
       chatPlaceholder: "พิมพ์ข้อความ...",
+      thinking: "กำลังคิด",
       exampleLabel: "ตัวอย่าง",
       exampleText:
-        "ส่งเสื้อผ้าไปหา John Doe ที่สหรัฐอเมริกา รหัสไปรษณีย์ 10001 อยู่ 123 Main St เบอร์ติดต่อ +1 212 555 0100 มูลค่าประมาณ 2000 บาท หนัก 5 ปอนด์",
+        "ส่งเสื้อผ้าไปหา John Dear ที่สหรัฐอเมริกา รหัสไปรษณีย์ 10001 อยู่ 123 Main St เบอร์ติดต่อ +1 212 555 0100 มูลค่าประมาณ 2000 บาท หนัก 5 ปอนด์",
       cannedReply: "รับทราบครับ จะเอาไปใช้กรอกฟอร์มให้",
       quotaExceededReply:
         "ตอนนี้ระบบผู้ช่วยใช้งานเกินโควตาชั่วคราว กรุณาลองใหม่อีกครั้งในอีกไม่กี่นาที",
@@ -163,6 +174,10 @@ export const dictionaries: Record<Locale, Dictionary> = {
         "น้ำหนัก (กก.)",
         "มูลค่าสินค้า (บาท)",
       ],
+      sendShipment: "ส่งพัสดุ",
+      shipmentSentMessage: "ส่งพัสดุเรียบร้อยแล้วครับ",
+      receiptTitle: "ใบเสร็จการส่งพัสดุ",
+      newShipment: "สร้างพัสดุใหม่",
     },
     howItWorks: {
       title: "วิธีการทำงาน",

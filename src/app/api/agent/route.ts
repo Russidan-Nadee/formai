@@ -4,10 +4,16 @@ import { APICallError, generateText, stepCountIs, type LanguageModel, type Model
 import { NextResponse } from "next/server";
 import { SHIPMENT_FIELD_KEYS } from "@/lib/shipment-fields";
 import { dictionaries, type Locale } from "@/lib/i18n";
-import { createFillFormFieldTool, type FieldUpdate } from "@/lib/tools/fill-form-field";
+import {
+  createFillFormFieldTool,
+  createPostcodeGate,
+  type FieldUpdate,
+} from "@/lib/tools/fill-form-field";
 import { lookupCountryTool } from "@/lib/tools/lookup-country";
-import { lookupPostcodeTool } from "@/lib/tools/lookup-postcode";
+import { createLookupPostcodeTool } from "@/lib/tools/lookup-postcode";
 import { convertWeightTool } from "@/lib/tools/convert-weight";
+import { lookupCountry } from "@/lib/countries";
+import { lookupPostcode } from "@/lib/geonames";
 
 const google = createGoogleGenerativeAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -29,6 +35,7 @@ async function runAgent(
   profile: SenderProfile,
 ) {
   const updates: FieldUpdate[] = [];
+  const postcodeGate = createPostcodeGate();
 
   const senderContext = profile
     ? `The sender is ${profile.name}, who runs a ${profile.business}, based at ${profile.address}. senderName and senderAddress are already filled in with this information — do not ask about them or refill them unless the message explicitly gives different sender details.`
@@ -56,15 +63,15 @@ ${senderContext}
 
 This is an ongoing conversation — earlier messages and what you already filled in are in the message history. Do not re-ask about or re-fill something already established there unless the user contradicts it.
 
-After filling what you can, reply with one short sentence confirming what you filled in. If recipientName, shippingCountry, or shippingAddress1 is still missing, ask a brief follow-up question for it.
+After filling what you can, reply with one short sentence confirming what you filled in. Only mention a field in that sentence if you actually called fill_form_field for it this turn — never describe a value as filled from memory or assumption, even if you're confident what it should be (e.g. a well-known postcode's city). If recipientName, shippingCountry, or shippingAddress1 is still missing, ask a brief follow-up question for it.
 
 Always reply in ${replyLanguage}, regardless of what language the user's message is in.`,
 
     messages: [...history, userMessage],
     tools: {
-      fill_form_field: createFillFormFieldTool(updates),
+      fill_form_field: createFillFormFieldTool(updates, postcodeGate),
       lookup_country: lookupCountryTool,
-      lookup_postcode: lookupPostcodeTool,
+      lookup_postcode: createLookupPostcodeTool(postcodeGate),
       convert_weight: convertWeightTool,
     },
     // A message that needs country + postcode + weight lookups plus several
@@ -72,6 +79,27 @@ Always reply in ${replyLanguage}, regardless of what language the user's message
     // headroom so the final text reply doesn't get cut off mid-chain.
     stopWhen: stepCountIs(10),
   });
+
+  // Deterministic backstop, not another thing to ask the model nicely for:
+  // if this turn resolved both a postcode and a country but never landed on
+  // city/state (the model skipped lookup_postcode, or tried to recall them
+  // from memory and got rejected by the gate above), resolve them directly
+  // here so the form still ends up correct regardless of what the model did.
+  const postcodeUpdate = updates.find((u) => u.field === "shippingPostCode");
+  const countryUpdate = updates.find((u) => u.field === "shippingCountry");
+  const hasCity = updates.some((u) => u.field === "shippingCity");
+  const hasState = updates.some((u) => u.field === "shippingState");
+
+  if (postcodeUpdate && countryUpdate && (!hasCity || !hasState)) {
+    const country = lookupCountry(countryUpdate.value);
+    const resolved = country ? await lookupPostcode(postcodeUpdate.value, country.code) : null;
+    if (resolved) {
+      if (!hasCity) updates.push({ field: "shippingCity", value: resolved.placeName });
+      if (!hasState && resolved.adminName1) {
+        updates.push({ field: "shippingState", value: resolved.adminName1 });
+      }
+    }
+  }
 
   // The caller persists this turn's messages (user + assistant/tool) as the
   // history to send back on the next turn — the route itself holds no state.
