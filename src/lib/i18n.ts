@@ -10,6 +10,7 @@ export type Dictionary = {
   description: string;
   ctaPrimary: string;
   ctaSecondary: string;
+  footerNote: string;
   workspace: {
     back: string;
     chatTitle: string;
@@ -18,6 +19,8 @@ export type Dictionary = {
     exampleLabel: string;
     exampleText: string;
     cannedReply: string;
+    quotaExceededReply: string;
+    agentUnavailableReply: string;
     send: string;
     formTitle: string;
     senderSection: string;
@@ -44,6 +47,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       "An agent that reads your data, and prefills the form for you. You only show up to confirm.",
     ctaPrimary: "Get started",
     ctaSecondary: "How it works",
+    footerNote: "Built with Next.js.",
     workspace: {
       back: "FormAI",
       chatTitle: "Chat with the agent",
@@ -53,6 +57,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
       exampleText:
         "Shipping clothes to John Doe in the US, zip code 10001, at 123 Main St. Contact +1 212 555 0100. Worth about 2000 baht, weighs 5 lbs.",
       cannedReply: "Got it — I'll factor that into the form.",
+      quotaExceededReply:
+        "The assistant has hit its usage limit for now. Please try again in a few minutes.",
+      agentUnavailableReply: "Something went wrong on our end. Please try again in a moment.",
       send: "Send",
       formTitle: "Form preview",
       senderSection: "Sender",
@@ -124,6 +131,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
     description: "เอเจนต์ที่อ่านข้อมูลของคุณ แล้วกรอกฟอร์มให้ล่วงหน้า คุณแค่มายืนยันอีกครั้ง",
     ctaPrimary: "เริ่มต้นใช้งาน",
     ctaSecondary: "วิธีการทำงาน",
+    footerNote: "สร้างด้วย Next.js",
     workspace: {
       back: "FormAI",
       chatTitle: "คุยกับ Agent",
@@ -133,6 +141,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
       exampleText:
         "ส่งเสื้อผ้าไปหา John Doe ที่สหรัฐอเมริกา รหัสไปรษณีย์ 10001 อยู่ 123 Main St เบอร์ติดต่อ +1 212 555 0100 มูลค่าประมาณ 2000 บาท หนัก 5 ปอนด์",
       cannedReply: "รับทราบครับ จะเอาไปใช้กรอกฟอร์มให้",
+      quotaExceededReply:
+        "ตอนนี้ระบบผู้ช่วยใช้งานเกินโควตาชั่วคราว กรุณาลองใหม่อีกครั้งในอีกไม่กี่นาที",
+      agentUnavailableReply: "ระบบขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้ง",
       send: "ส่ง",
       formTitle: "พรีวิวฟอร์ม",
       senderSection: "ผู้ส่ง",

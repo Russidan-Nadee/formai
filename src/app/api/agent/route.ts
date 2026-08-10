@@ -1,6 +1,6 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { groq } from "@ai-sdk/groq";
-import { generateText, stepCountIs, type LanguageModel, type ModelMessage } from "ai";
+import { APICallError, generateText, stepCountIs, type LanguageModel, type ModelMessage } from "ai";
 import { NextResponse } from "next/server";
 import { SHIPMENT_FIELD_KEYS } from "@/lib/shipment-fields";
 import { dictionaries, type Locale } from "@/lib/i18n";
@@ -10,6 +10,13 @@ import { lookupPostcodeTool } from "@/lib/tools/lookup-postcode";
 import { convertWeightTool } from "@/lib/tools/convert-weight";
 
 const google = createGoogleGenerativeAI({ apiKey: process.env.GEMINI_API_KEY });
+
+// Distinguishes "every provider is rate-limited / out of quota" from other
+// failures (bad API key, network error, etc.) so the client can show the
+// user an accurate message instead of a generic one.
+function isRateLimitError(error: unknown): boolean {
+  return APICallError.isInstance(error) && error.statusCode === 429;
+}
 
 type SenderProfile = { name: string; business: string; address: string } | undefined;
 
@@ -71,29 +78,25 @@ Always reply in ${replyLanguage}, regardless of what language the user's message
   return { reply: result.text, updates, messages: [userMessage, ...result.responseMessages] };
 }
 
+// Tried in order — gemini-2.5-flash-lite has a separate quota from
+// gemini-2.5-flash, so it's worth a shot before falling back to Groq.
+const MODEL_CHAIN: { name: string; model: LanguageModel }[] = [
+  { name: "gemini-2.5-flash", model: google("gemini-2.5-flash") },
+  { name: "gemini-2.5-flash-lite", model: google("gemini-2.5-flash-lite") },
+  { name: "groq llama-3.3-70b-versatile", model: groq("llama-3.3-70b-versatile") },
+];
+
 export async function POST(req: Request) {
   const { message, replyLocale, profile, history } = await req.json();
   const locale: Locale = replyLocale === "th" ? "th" : "en";
   const replyLanguage = locale === "th" ? "Thai" : "English";
   const conversationHistory: ModelMessage[] = Array.isArray(history) ? history : [];
 
-  //ลองใช้โมเดล Gemini ก่อน
-  try {
-    const data = await runAgent(
-      google("gemini-2.5-flash"),
-      conversationHistory,
-      message,
-      replyLanguage,
-      locale,
-      profile,
-    );
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error("Gemini flash failed, falling back to Gemini flash-lite:", error);
-    // gemini-2.5-flash-lite has a separate quota from gemini-2.5-flash
+  const errors: unknown[] = [];
+  for (const { name, model } of MODEL_CHAIN) {
     try {
       const data = await runAgent(
-        google("gemini-2.5-flash-lite"),
+        model,
         conversationHistory,
         message,
         replyLanguage,
@@ -101,23 +104,18 @@ export async function POST(req: Request) {
         profile,
       );
       return NextResponse.json(data);
-    } catch (liteError) {
-      console.error("Gemini flash-lite failed, falling back to Groq:", liteError);
-      // ถ้า Gemini error ลองใช้โมเดล Groq แทน
-      try {
-        const data = await runAgent(
-          groq("llama-3.3-70b-versatile"),
-          conversationHistory,
-          message,
-          replyLanguage,
-          locale,
-          profile,
-        );
-        return NextResponse.json(data);
-      } catch (fallbackError) {
-        console.error("Groq fallback also failed:", fallbackError);
-        return NextResponse.json({ error: "agent_unavailable" }, { status: 502 });
-      }
+    } catch (error) {
+      console.error(`${name} failed:`, error);
+      errors.push(error);
     }
   }
+
+  // Only report "quota_exceeded" if every provider actually hit a rate
+  // limit — a mix (e.g. Groq failing for an unrelated reason) is a genuine
+  // outage, not something waiting a bit will fix.
+  const allRateLimited = errors.every(isRateLimitError);
+  return NextResponse.json(
+    { error: allRateLimited ? "quota_exceeded" : "agent_unavailable" },
+    { status: allRateLimited ? 429 : 502 },
+  );
 }

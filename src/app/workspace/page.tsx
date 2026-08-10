@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type SubmitEvent } from "react";
+import { motion } from "framer-motion";
 import { LanguageToggle } from "@/components/language-toggle";
 import { useLanguage } from "@/components/language-provider";
 import { ThinkingOrb } from "@/components/thinking-orb";
@@ -13,6 +14,8 @@ import {
   SENDER_FIELD_COUNT,
   type ShipmentFieldKey,
 } from "@/lib/shipment-fields";
+
+const EASE = [0.16, 1, 0.3, 1] as const;
 
 type Message = {
   id: number;
@@ -36,7 +39,12 @@ function FieldInput({
   containerRef?: (el: HTMLLabelElement | null) => void;
 }>) {
   return (
-    <label ref={containerRef} className="flex flex-col gap-1.5 text-sm">
+    <motion.label
+      ref={containerRef}
+      animate={{ scale: flashing ? [1, 1.03, 1] : 1 }}
+      transition={{ duration: 0.6, ease: EASE }}
+      className="flex flex-col gap-1.5 text-sm"
+    >
       <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
         {label}
       </span>
@@ -48,7 +56,7 @@ function FieldInput({
           flashing ? "bg-accent" : "bg-background"
         }`}
       />
-    </label>
+    </motion.label>
   );
 }
 
@@ -146,6 +154,16 @@ export default function Workspace() {
       });
       const data = await res.json();
 
+      if (!res.ok) {
+        const errorText =
+          data.error === "quota_exceeded"
+            ? t.workspace.quotaExceededReply
+            : t.workspace.agentUnavailableReply;
+        setMessages((prev) => [...prev, { id: prev.length, role: "agent", text: errorText }]);
+        setIsThinking(false);
+        return;
+      }
+
       if (Array.isArray(data.messages)) {
         setHistory((prev) => [...prev, ...(data.messages as ModelMessage[])]);
       }
@@ -162,7 +180,7 @@ export default function Workspace() {
     } catch {
       setMessages((prev) => [
         ...prev,
-        { id: prev.length, role: "agent", text: t.workspace.cannedReply },
+        { id: prev.length, role: "agent", text: t.workspace.agentUnavailableReply },
       ]);
       setIsThinking(false);
     }
@@ -170,7 +188,12 @@ export default function Workspace() {
 
   return (
     <div className="flex flex-col bg-background text-foreground md:h-dvh md:overflow-hidden">
-      <div className="flex items-center justify-between border-b border-border px-6 py-4">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4 }}
+        className="flex items-center justify-between border-b border-border px-6 py-4"
+      >
         <Link
           href="/"
           className="flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
@@ -186,10 +209,15 @@ export default function Workspace() {
         )}
 
         <LanguageToggle />
-      </div>
+      </motion.div>
 
       <div className="flex flex-1 flex-col md:min-h-0 md:flex-row">
-        <div className="flex h-[70dvh] flex-col overflow-hidden border-b border-border md:h-auto md:min-h-0 md:flex-1 md:border-b-0 md:border-r">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: EASE, delay: 0.1 }}
+          className="flex h-[70dvh] flex-col overflow-hidden border-b border-border md:h-auto md:min-h-0 md:flex-1 md:border-b-0 md:border-r"
+        >
           <h2 className="flex items-center gap-2 border-b border-border px-6 py-4 font-heading text-lg">
             <ThinkingOrb className="h-10 w-10 shrink-0" intensity={1.8} />
             {t.workspace.chatTitle}
@@ -201,8 +229,11 @@ export default function Workspace() {
             )}
 
             {messages.map((m) => (
-              <div
+              <motion.div
                 key={m.id}
+                initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.25, ease: EASE }}
                 className={
                   m.role === "user"
                     ? "ml-auto max-w-[80%] bg-primary px-4 py-2 text-sm text-primary-foreground"
@@ -210,7 +241,7 @@ export default function Workspace() {
                 }
               >
                 {m.text}
-              </div>
+              </motion.div>
             ))}
 
             {isThinking && (
@@ -255,9 +286,14 @@ export default function Workspace() {
               {t.workspace.send}
             </button>
           </form>
-        </div>
+        </motion.div>
 
-        <div className="p-6 md:min-h-0 md:flex-1 md:overflow-y-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: EASE, delay: 0.2 }}
+          className="p-6 md:min-h-0 md:flex-1 md:overflow-y-auto"
+        >
           <h2 className="mb-4 font-heading text-lg">{t.workspace.formTitle}</h2>
 
           <h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">
@@ -301,7 +337,7 @@ export default function Workspace() {
               );
             })}
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );
