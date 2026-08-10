@@ -99,7 +99,7 @@ export default function Workspace() {
   }
 
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-background text-foreground">
+    <div className="flex flex-col bg-background text-foreground md:h-dvh md:overflow-hidden">
       <div className="flex items-center justify-between border-b border-border px-6 py-4">
         <Link
           href="/"
@@ -118,8 +118,8 @@ export default function Workspace() {
         <LanguageToggle />
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
-        <div className="flex min-h-0 flex-1 flex-col border-b border-border md:border-b-0 md:border-r">
+      <div className="flex flex-1 flex-col md:min-h-0 md:flex-row">
+        <div className="flex h-[70dvh] flex-col overflow-hidden border-b border-border md:h-auto md:min-h-0 md:flex-1 md:border-b-0 md:border-r">
           <h2 className="flex items-center gap-2 border-b border-border px-6 py-4 font-heading text-lg">
             <ThinkingOrb className="h-10 w-10 shrink-0" intensity={1.8} />
             {t.workspace.chatTitle}
@@ -179,7 +179,7 @@ export default function Workspace() {
           </form>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto p-6">
+        <div className="p-6 md:min-h-0 md:flex-1 md:overflow-y-auto">
           <h2 className="mb-4 font-heading text-lg">{t.workspace.formTitle}</h2>
 
           <h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">

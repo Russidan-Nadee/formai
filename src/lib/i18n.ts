@@ -162,7 +162,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
     },
     profilePicker: {
       title: "ใครเป็นคนส่ง?",
-      subtitle: "เลือกโปรไฟล์ — agent จะรู้ข้อมูลของคุณไว้ล่วงหน้าเลย",
+      subtitle: "เลือกโปรไฟล์ agent จะรู้ข้อมูลของคุณไว้ล่วงหน้าเลย",
       sendingAs: "ส่งในนาม",
       profiles: [
         {
