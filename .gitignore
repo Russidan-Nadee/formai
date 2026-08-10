@@ -46,3 +46,6 @@ next-env.d.ts
 /.claude/
 /.agents/
 /.windsurf/
+
+AGENTS.md
+CLAUDE.md
