@@ -15,6 +15,8 @@ export type Dictionary = {
     chatTitle: string;
     chatEmpty: string;
     chatPlaceholder: string;
+    exampleLabel: string;
+    exampleText: string;
     cannedReply: string;
     send: string;
     formTitle: string;
@@ -45,6 +47,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
       chatTitle: "Chat with the agent",
       chatEmpty: "Tell the agent what you're trying to fill out.",
       chatPlaceholder: "Type a message...",
+      exampleLabel: "Example",
+      exampleText:
+        "Shipping clothes to John Doe in the US, at 123 Main St, New York. Worth about 2000 baht, weighs a bit over a kilo.",
       cannedReply: "Got it — I'll factor that into the form.",
       send: "Send",
       formTitle: "Form preview",
@@ -88,7 +93,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
   },
   th: {
     kicker: "FormAI, ผู้ช่วยกรอกฟอร์มอัตโนมัติ",
-    heading: ["AI ผู้ช่วย", "กรอกฟอร์ม", "โดยอัตโนมัติ"],
+    heading: ["AI ผู้ช่วย", "กรอกฟอร์มโดยอัตโนมัติ"],
     description: "เอเจนต์ที่อ่านข้อมูลของคุณ แล้วกรอกฟอร์มให้ล่วงหน้า คุณแค่มายืนยันอีกครั้ง",
     ctaPrimary: "เริ่มต้นใช้งาน",
     ctaSecondary: "วิธีการทำงาน",
@@ -97,6 +102,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
       chatTitle: "คุยกับ Agent",
       chatEmpty: "บอก agent ว่าคุณอยากกรอกฟอร์มอะไร",
       chatPlaceholder: "พิมพ์ข้อความ...",
+      exampleLabel: "ตัวอย่าง",
+      exampleText:
+        "ส่งเสื้อผ้าไปหา John Doe ที่อเมริกา อยู่ 123 Main St, New York มูลค่าประมาณ 2000 บาท หนักสักกิโลกว่าๆ",
       cannedReply: "รับทราบครับ จะเอาไปใช้กรอกฟอร์มให้",
       send: "ส่ง",
       formTitle: "พรีวิวฟอร์ม",
@@ -117,7 +125,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
           description: "พิมพ์สิ่งที่คุณอยากกรอก เป็นข้อความธรรมดา",
         },
         {
-          title: "มันอ่านแล้วตัดสินใจ",
+          title: "agent ตัดสินใจ",
           description: "agent จับคู่สิ่งที่คุณพิมพ์เข้ากับช่องที่ถูกต้อง",
         },
         {

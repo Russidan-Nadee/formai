@@ -11,6 +11,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@ai-sdk/google": "^4.0.39",
     "@ai-sdk/groq": "^4.0.26",
     "@base-ui/react": "^1.7.0",
     "@prisma/client": "^7.9.1",

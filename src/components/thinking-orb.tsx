@@ -2,10 +2,15 @@
 
 import { useEffect, useRef } from "react";
 
-const NODE_COUNT = 120;
 const EDGES_PER_NODE = 3;
 const CYCLE_SECONDS = 8;
 const SCALE_KEYFRAMES = [1, 0.85, 1.1, 0.95];
+const MIN_NODES = 18;
+const MAX_NODES = 140;
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
 
 type Vec3 = { x: number; y: number; z: number };
 type Node = Vec3 & { seed: number };
@@ -109,7 +114,11 @@ export function ThinkingOrb({ className }: { className?: string }) {
     resize();
     window.addEventListener("resize", resize);
 
-    const nodes = buildSphere(NODE_COUNT);
+    // Fewer nodes for small orbs (e.g. the inline chat indicator) so dots
+    // and glow don't overlap into a solid blob at low pixel sizes.
+    const densityRadius = Math.min(width, height) * 0.36;
+    const nodeCount = Math.round(clamp(densityRadius * 1.5, MIN_NODES, MAX_NODES));
+    const nodes = buildSphere(nodeCount);
     const edges = buildEdges(nodes, EDGES_PER_NODE);
     const signals: Signal[] = [];
     let lastSpawn = 0;
@@ -142,7 +151,13 @@ export function ThinkingOrb({ className }: { className?: string }) {
         return { x: cx + q.x * f, y: cy + q.y * f, depth: pz };
       });
 
-      ctx!.lineWidth = 1;
+      // Dot/line sizes scale with the orb's on-screen radius so a small
+      // (e.g. inline chat) orb doesn't render nodes as an oversized blob.
+      const nodeUnit = baseRadius * 0.035;
+      const lineWidth = Math.max(0.5, baseRadius * 0.014);
+      const signalRadius = Math.max(0.75, baseRadius * 0.03);
+
+      ctx!.lineWidth = lineWidth;
       for (const [a, b] of edges) {
         const pa = projected[a];
         const pb = projected[b];
@@ -156,7 +171,7 @@ export function ThinkingOrb({ className }: { className?: string }) {
 
       for (const pr of projected) {
         const t = Math.max(0, Math.min(1, (pr.depth - 2) / 4));
-        const radius = 1 + t * 1.25;
+        const radius = nodeUnit * (0.6 + t * 0.7);
 
         const glow = ctx!.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, radius * 3);
         glow.addColorStop(0, `rgba(10,10,10,${(0.18 + t * 0.22).toFixed(3)})`);
@@ -192,7 +207,13 @@ export function ThinkingOrb({ className }: { className?: string }) {
         const envelope = Math.sin(Math.PI * prog);
         ctx!.fillStyle = `rgba(10,10,10,${(0.85 * envelope).toFixed(3)})`;
         ctx!.beginPath();
-        ctx!.arc(pa.x + (pb.x - pa.x) * prog, pa.y + (pb.y - pa.y) * prog, 2, 0, Math.PI * 2);
+        ctx!.arc(
+          pa.x + (pb.x - pa.x) * prog,
+          pa.y + (pb.y - pa.y) * prog,
+          signalRadius,
+          0,
+          Math.PI * 2,
+        );
         ctx!.fill();
       }
 

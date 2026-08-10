@@ -7,11 +7,23 @@ import { useState, type FormEvent } from "react";
 import { LanguageToggle } from "@/components/language-toggle";
 import { useLanguage } from "@/components/language-provider";
 import { ThinkingOrb } from "@/components/thinking-orb";
+import { SHIPMENT_FIELD_KEYS, type ShipmentFieldKey } from "@/lib/shipment-fields";
 
 type Message = {
   id: number;
   role: "user" | "agent";
   text: string;
+};
+
+type FieldValues = Record<ShipmentFieldKey, string | null>;
+
+const EMPTY_VALUES: FieldValues = {
+  recipientName: null,
+  destinationCountry: null,
+  shippingAddress: null,
+  itemDescription: null,
+  weightKg: null,
+  declaredValue: null,
 };
 
 export default function Workspace() {
@@ -21,23 +33,56 @@ export default function Workspace() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isThinking, setIsThinking] = useState(false);
+  const [values, setValues] = useState<FieldValues>(EMPTY_VALUES);
+  const [replyLocale, setReplyLocale] = useState<"th" | "en" | null>(null);
 
-  function handleSend(e: FormEvent) {
+  async function handleSend(e: FormEvent) {
     e.preventDefault();
     const text = input.trim();
     if (!text) return;
+
+    // Detect the reply language once, from the first message, and reuse it
+    // for the rest of the session — re-detecting per message would misfire
+    // on short follow-up replies like "USA" that carry no script signal.
+    const locale = replyLocale ?? (/[฀-๿]/.test(text) ? "th" : "en");
+    if (!replyLocale) setReplyLocale(locale);
 
     setMessages((prev) => [...prev, { id: prev.length, role: "user", text }]);
     setInput("");
     setIsThinking(true);
 
-    setTimeout(() => {
+    try {
+      const res = await fetch("/api/agent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text, replyLocale: locale }),
+      });
+      const data = await res.json();
+
+      if (Array.isArray(data.updates)) {
+        setValues((prev) => {
+          const next = { ...prev };
+          for (const update of data.updates as { field: string; value: string }[]) {
+            if ((SHIPMENT_FIELD_KEYS as readonly string[]).includes(update.field)) {
+              next[update.field as ShipmentFieldKey] = update.value;
+            }
+          }
+          return next;
+        });
+      }
+
+      setMessages((prev) => [
+        ...prev,
+        { id: prev.length, role: "agent", text: data.reply || t.workspace.cannedReply },
+      ]);
+    } catch {
       setMessages((prev) => [
         ...prev,
         { id: prev.length, role: "agent", text: t.workspace.cannedReply },
       ]);
+    } finally {
       setIsThinking(false);
-    }, 1200);
+    }
   }
 
   return (
@@ -91,6 +136,19 @@ export default function Workspace() {
             )}
           </div>
 
+          {messages.length === 0 && (
+            <button
+              type="button"
+              onClick={() => setInput(t.workspace.exampleText)}
+              className="mx-4 mt-4 flex flex-col gap-1 border border-border p-3 text-left transition-colors hover:bg-accent"
+            >
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {t.workspace.exampleLabel}
+              </span>
+              <span className="text-sm text-muted-foreground">{t.workspace.exampleText}</span>
+            </button>
+          )}
+
           <form onSubmit={handleSend} className="flex gap-2 border-t border-border p-4">
             <input
               value={input}
@@ -109,16 +167,28 @@ export default function Workspace() {
 
         <div className="flex-1 p-6">
           <h2 className="mb-4 font-heading text-lg">{t.workspace.formTitle}</h2>
-          <div className="flex flex-col">
-            {t.workspace.fields.map((field) => (
-              <div
-                key={field}
-                className="flex items-center justify-between border-b border-border py-3 text-sm"
-              >
-                <span className="text-muted-foreground">{field}</span>
-                <span className="text-muted-foreground">—</span>
-              </div>
-            ))}
+          <div className="flex flex-col gap-4">
+            {t.workspace.fields.map((label, i) => {
+              const key = SHIPMENT_FIELD_KEYS[i];
+              return (
+                <label key={key} className="flex flex-col gap-1.5 text-sm">
+                  <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    {label}
+                  </span>
+                  <input
+                    value={values[key] ?? ""}
+                    onChange={(e) =>
+                      setValues((prev) => ({
+                        ...prev,
+                        [key]: e.target.value || null,
+                      }))
+                    }
+                    placeholder="—"
+                    className="h-11 border border-border bg-background px-3 text-sm text-foreground outline-none focus:border-foreground"
+                  />
+                </label>
+              );
+            })}
           </div>
         </div>
       </div>
