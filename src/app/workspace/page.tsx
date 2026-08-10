@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { LanguageToggle } from "@/components/language-toggle";
 import { useLanguage } from "@/components/language-provider";
@@ -14,6 +16,8 @@ type Message = {
 
 export default function Workspace() {
   const { t } = useLanguage();
+  const searchParams = useSearchParams();
+  const profile = t.profilePicker.profiles[Number(searchParams.get("profile"))];
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isThinking, setIsThinking] = useState(false);
@@ -41,10 +45,18 @@ export default function Workspace() {
       <div className="flex items-center justify-between border-b border-border px-6 py-4">
         <Link
           href="/"
-          className="font-mono text-sm uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
+          className="flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
         >
-          ← {t.workspace.back}
+          <ArrowLeft className="h-4 w-4" />
+          {t.workspace.back}
         </Link>
+
+        {profile && (
+          <span className="font-mono text-sm text-muted-foreground">
+            {t.profilePicker.sendingAs} <span className="text-foreground">{profile.name}</span>
+          </span>
+        )}
+
         <LanguageToggle />
       </div>
 
@@ -97,16 +109,15 @@ export default function Workspace() {
 
         <div className="flex-1 p-6">
           <h2 className="mb-4 font-heading text-lg">{t.workspace.formTitle}</h2>
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col">
             {t.workspace.fields.map((field) => (
-              <label key={field} className="flex flex-col gap-1 text-sm">
+              <div
+                key={field}
+                className="flex items-center justify-between border-b border-border py-3 text-sm"
+              >
                 <span className="text-muted-foreground">{field}</span>
-                <input
-                  disabled
-                  placeholder="—"
-                  className="h-11 border border-border bg-muted px-3 text-sm text-muted-foreground"
-                />
-              </label>
+                <span className="text-muted-foreground">—</span>
+              </div>
             ))}
           </div>
         </div>

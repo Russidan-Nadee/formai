@@ -156,7 +156,7 @@ export function ThinkingOrb({ className }: { className?: string }) {
 
       for (const pr of projected) {
         const t = Math.max(0, Math.min(1, (pr.depth - 2) / 4));
-        const radius = 2 + t * 2.5;
+        const radius = 1 + t * 1.25;
 
         const glow = ctx!.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, radius * 3);
         glow.addColorStop(0, `rgba(10,10,10,${(0.18 + t * 0.22).toFixed(3)})`);
