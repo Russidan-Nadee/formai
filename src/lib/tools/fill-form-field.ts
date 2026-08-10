@@ -10,7 +10,7 @@ export type FieldUpdate = { field: string; value: string };
 export function createFillFormFieldTool(updates: FieldUpdate[]) {
   return tool({
     description:
-      "Fill one field of the shipment form. For shippingCountry: translate to English and fix obvious spelling before calling — only an exact English name or ISO code is accepted, and an unrecognized value is rejected instead of being filled. For weightKg: call convert_weight first if the user gave a unit, or ask the user for the unit if none was given — only a plain numeric kg value is accepted here, never a number with a unit attached.",
+      "Fill one field of the shipment form. Call this once for each field you can confidently determine from the message — do not guess or invent values. For shippingCountry: translate to English and fix obvious spelling before calling — only an exact English name or ISO code is accepted, and an unrecognized value is rejected instead of being filled. For weightKg: call convert_weight first if the user gave a unit, or ask the user for the unit if none was given — only a plain numeric kg value is accepted here, never a number with a unit attached.",
     inputSchema: z.object({
       field: z.enum(SHIPMENT_FIELD_KEYS),
       value: z.string(),

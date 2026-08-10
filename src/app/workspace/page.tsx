@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type SubmitEvent } from "react";
 import { LanguageToggle } from "@/components/language-toggle";
 import { useLanguage } from "@/components/language-provider";
 import { ThinkingOrb } from "@/components/thinking-orb";
@@ -27,14 +27,16 @@ function FieldInput({
   value,
   flashing,
   onChange,
+  containerRef,
 }: Readonly<{
   label: string;
   value: string | null;
   flashing: boolean;
   onChange: (value: string) => void;
+  containerRef?: (el: HTMLLabelElement | null) => void;
 }>) {
   return (
-    <label className="flex flex-col gap-1.5 text-sm">
+    <label ref={containerRef} className="flex flex-col gap-1.5 text-sm">
       <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
         {label}
       </span>
@@ -49,6 +51,8 @@ function FieldInput({
     </label>
   );
 }
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const EMPTY_VALUES: FieldValues = {
   senderName: null,
@@ -87,8 +91,39 @@ export default function Workspace() {
   // the route on every turn — the route itself holds no state between
   // requests, so this is the only place the session lives.
   const [history, setHistory] = useState<ModelMessage[]>([]);
+  const fieldRefs = useRef<Partial<Record<ShipmentFieldKey, HTMLLabelElement>>>({});
+  const chatInputRef = useRef<HTMLTextAreaElement>(null);
 
-  async function handleSend(e: FormEvent) {
+  // Grow the textarea to fit its content (up to the max-h cap, where it
+  // scrolls instead) — covers typing, the example-text button, and the
+  // clear-after-send reset, since all of them just change `input`.
+  useEffect(() => {
+    const el = chatInputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [input]);
+
+  // Reveals one field at a time: scroll it into view first (in case the
+  // agent filled something the user hasn't scrolled to), then flash it —
+  // never flash a field the user can't currently see.
+  async function revealUpdatesSequentially(updates: { field: string; value: string }[]) {
+    for (const update of updates) {
+      const key = update.field;
+      if (!(SHIPMENT_FIELD_KEYS as readonly string[]).includes(key)) continue;
+      const fieldKey = key as ShipmentFieldKey;
+
+      fieldRefs.current[fieldKey]?.scrollIntoView({ behavior: "smooth", block: "center" });
+      await sleep(400);
+
+      setValues((prev) => ({ ...prev, [fieldKey]: update.value }));
+      setFlashingFields(new Set([fieldKey]));
+      await sleep(700);
+      setFlashingFields(new Set());
+    }
+  }
+
+  async function handleSend(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     const text = input.trim();
     if (!text) return;
@@ -115,39 +150,20 @@ export default function Workspace() {
         setHistory((prev) => [...prev, ...(data.messages as ModelMessage[])]);
       }
 
-      if (Array.isArray(data.updates)) {
-        const updatedKeys = (data.updates as { field: string; value: string }[])
-          .map((update) => update.field)
-          .filter((field): field is ShipmentFieldKey =>
-            (SHIPMENT_FIELD_KEYS as readonly string[]).includes(field),
-          );
-
-        setValues((prev) => {
-          const next = { ...prev };
-          for (const update of data.updates as { field: string; value: string }[]) {
-            if ((SHIPMENT_FIELD_KEYS as readonly string[]).includes(update.field)) {
-              next[update.field as ShipmentFieldKey] = update.value;
-            }
-          }
-          return next;
-        });
-
-        // Briefly highlight the fields the agent just filled, so it reads
-        // as "something happened here" rather than values silently popping in.
-        setFlashingFields(new Set(updatedKeys));
-        setTimeout(() => setFlashingFields(new Set()), 900);
-      }
-
       setMessages((prev) => [
         ...prev,
         { id: prev.length, role: "agent", text: data.reply || t.workspace.cannedReply },
       ]);
+      setIsThinking(false);
+
+      if (Array.isArray(data.updates)) {
+        await revealUpdatesSequentially(data.updates as { field: string; value: string }[]);
+      }
     } catch {
       setMessages((prev) => [
         ...prev,
         { id: prev.length, role: "agent", text: t.workspace.cannedReply },
       ]);
-    } finally {
       setIsThinking(false);
     }
   }
@@ -218,11 +234,19 @@ export default function Workspace() {
           )}
 
           <form onSubmit={handleSend} className="flex gap-2 border-t border-border p-4">
-            <input
+            <textarea
+              ref={chatInputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  e.currentTarget.form?.requestSubmit();
+                }
+              }}
               placeholder={t.workspace.chatPlaceholder}
-              className="h-11 flex-1 border border-border bg-background px-3 text-sm outline-none focus:border-foreground"
+              rows={1}
+              className="max-h-40 min-h-11 flex-1 resize-none overflow-y-auto border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-foreground"
             />
             <button
               type="submit"
@@ -249,6 +273,9 @@ export default function Workspace() {
                   value={values[key]}
                   flashing={flashingFields.has(key)}
                   onChange={(value) => setValues((prev) => ({ ...prev, [key]: value || null }))}
+                  containerRef={(el) => {
+                    fieldRefs.current[key] = el ?? undefined;
+                  }}
                 />
               );
             })}
@@ -267,6 +294,9 @@ export default function Workspace() {
                   value={values[key]}
                   flashing={flashingFields.has(key)}
                   onChange={(value) => setValues((prev) => ({ ...prev, [key]: value || null }))}
+                  containerRef={(el) => {
+                    fieldRefs.current[key] = el ?? undefined;
+                  }}
                 />
               );
             })}

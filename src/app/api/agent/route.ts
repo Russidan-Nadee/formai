@@ -35,6 +35,10 @@ async function runAgent(
 
   const result = await generateText({
     model,
+    // Gemini free-tier quota is per-day, not per-minute — retrying within
+    // the same request can never succeed once it's exhausted, so fail fast
+    // and let the fallback chain in POST() move to the next model instead.
+    maxRetries: 0,
     system: `You are FormAI, an agent that reads a customer's message about an international shipment and fills out a form by calling the fill_form_field tool.
 
 The only fields that exist, with their internal key and user-facing label, are: ${fieldLabels}.
@@ -44,14 +48,6 @@ Use the internal key (e.g. shippingAddress2) only when calling fill_form_field. 
 ${senderContext}
 
 This is an ongoing conversation — earlier messages and what you already filled in are in the message history. Do not re-ask about or re-fill something already established there unless the user contradicts it.
-
-Before filling shippingCountry, call lookup_country with the country name or code from the message to get its canonical name — if it returns not found, ask the user to clarify the country instead of filling the field.
-
-Postcodes are ambiguous across countries (the same code can belong to several), so only call lookup_postcode once shippingCountry is known — pass that country's code along with the postcode, and use the result to fill shippingCity and shippingState if they're not already known. Never use lookup_postcode to guess the country.
-
-For weightKg: if the message gives a weight with a unit (kg, g, lb, oz, or Thai equivalents), call convert_weight with that value and unit, then fill weightKg with the returned kg amount. If the message gives a bare number with no unit at all, do not guess the unit or call convert_weight — ask the user what unit it's in instead.
-
-Call fill_form_field once for each field you can confidently determine from the message. Do not guess or invent values.
 
 After filling what you can, reply with one short sentence confirming what you filled in. If recipientName, shippingCountry, or shippingAddress1 is still missing, ask a brief follow-up question for it.
 
@@ -93,11 +89,11 @@ export async function POST(req: Request) {
     );
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Gemini failed, falling back to Groq:", error);
-    // ถ้า Gemini error ลองใช้โมเดล Groq แทน
+    console.error("Gemini flash failed, falling back to Gemini flash-lite:", error);
+    // gemini-2.5-flash-lite has a separate quota from gemini-2.5-flash
     try {
       const data = await runAgent(
-        groq("llama-3.3-70b-versatile"),
+        google("gemini-2.5-flash-lite"),
         conversationHistory,
         message,
         replyLanguage,
@@ -105,9 +101,23 @@ export async function POST(req: Request) {
         profile,
       );
       return NextResponse.json(data);
-    } catch (fallbackError) {
-      console.error("Groq fallback also failed:", fallbackError);
-      return NextResponse.json({ error: "agent_unavailable" }, { status: 502 });
+    } catch (liteError) {
+      console.error("Gemini flash-lite failed, falling back to Groq:", liteError);
+      // ถ้า Gemini error ลองใช้โมเดล Groq แทน
+      try {
+        const data = await runAgent(
+          groq("llama-3.3-70b-versatile"),
+          conversationHistory,
+          message,
+          replyLanguage,
+          locale,
+          profile,
+        );
+        return NextResponse.json(data);
+      } catch (fallbackError) {
+        console.error("Groq fallback also failed:", fallbackError);
+        return NextResponse.json({ error: "agent_unavailable" }, { status: 502 });
+      }
     }
   }
 }
