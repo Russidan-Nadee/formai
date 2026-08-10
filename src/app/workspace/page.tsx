@@ -7,6 +7,7 @@ import { useState, type FormEvent } from "react";
 import { LanguageToggle } from "@/components/language-toggle";
 import { useLanguage } from "@/components/language-provider";
 import { ThinkingOrb } from "@/components/thinking-orb";
+import type { ModelMessage } from "ai";
 import {
   SHIPMENT_FIELD_KEYS,
   SENDER_FIELD_COUNT,
@@ -82,6 +83,10 @@ export default function Workspace() {
   }));
   const [replyLocale, setReplyLocale] = useState<"th" | "en" | null>(null);
   const [flashingFields, setFlashingFields] = useState<Set<ShipmentFieldKey>>(new Set());
+  // Full conversation history (including tool calls/results) sent back to
+  // the route on every turn — the route itself holds no state between
+  // requests, so this is the only place the session lives.
+  const [history, setHistory] = useState<ModelMessage[]>([]);
 
   async function handleSend(e: FormEvent) {
     e.preventDefault();
@@ -102,9 +107,13 @@ export default function Workspace() {
       const res = await fetch("/api/agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, replyLocale: locale, profile }),
+        body: JSON.stringify({ message: text, replyLocale: locale, profile, history }),
       });
       const data = await res.json();
+
+      if (Array.isArray(data.messages)) {
+        setHistory((prev) => [...prev, ...(data.messages as ModelMessage[])]);
+      }
 
       if (Array.isArray(data.updates)) {
         const updatedKeys = (data.updates as { field: string; value: string }[])

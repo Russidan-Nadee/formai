@@ -1,6 +1,6 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { groq } from "@ai-sdk/groq";
-import { generateText, stepCountIs, type LanguageModel } from "ai";
+import { generateText, stepCountIs, type LanguageModel, type ModelMessage } from "ai";
 import { NextResponse } from "next/server";
 import { SHIPMENT_FIELD_KEYS } from "@/lib/shipment-fields";
 import { dictionaries, type Locale } from "@/lib/i18n";
@@ -15,6 +15,7 @@ type SenderProfile = { name: string; business: string; address: string } | undef
 
 async function runAgent(
   model: LanguageModel,
+  history: ModelMessage[],
   message: string,
   replyLanguage: string,
   locale: Locale,
@@ -30,6 +31,8 @@ async function runAgent(
     (key, i) => `${key} = "${dictionaries[locale].workspace.fields[i]}"`,
   ).join(", ");
 
+  const userMessage: ModelMessage = { role: "user", content: message };
+
   const result = await generateText({
     model,
     system: `You are FormAI, an agent that reads a customer's message about an international shipment and fills out a form by calling the fill_form_field tool.
@@ -39,6 +42,8 @@ The only fields that exist, with their internal key and user-facing label, are: 
 Use the internal key (e.g. shippingAddress2) only when calling fill_form_field. When talking to the user — confirming what you filled in, or asking a follow-up question — always refer to a field by its user-facing label (e.g. "Address 2"), never by its internal key name.
 
 ${senderContext}
+
+This is an ongoing conversation — earlier messages and what you already filled in are in the message history. Do not re-ask about or re-fill something already established there unless the user contradicts it.
 
 Before filling shippingCountry, call lookup_country with the country name or code from the message to get its canonical name — if it returns not found, ask the user to clarify the country instead of filling the field.
 
@@ -52,6 +57,7 @@ After filling what you can, reply with one short sentence confirming what you fi
 
 Always reply in ${replyLanguage}, regardless of what language the user's message is in.`,
 
+    messages: [...history, userMessage],
     tools: {
       fill_form_field: createFillFormFieldTool(updates),
       lookup_country: lookupCountryTool,
@@ -62,21 +68,24 @@ Always reply in ${replyLanguage}, regardless of what language the user's message
     // fill_form_field calls can easily take 6+ steps end-to-end — leave
     // headroom so the final text reply doesn't get cut off mid-chain.
     stopWhen: stepCountIs(10),
-    prompt: message,
   });
 
-  return { reply: result.text, updates };
+  // The caller persists this turn's messages (user + assistant/tool) as the
+  // history to send back on the next turn — the route itself holds no state.
+  return { reply: result.text, updates, messages: [userMessage, ...result.responseMessages] };
 }
 
 export async function POST(req: Request) {
-  const { message, replyLocale, profile } = await req.json();
+  const { message, replyLocale, profile, history } = await req.json();
   const locale: Locale = replyLocale === "th" ? "th" : "en";
   const replyLanguage = locale === "th" ? "Thai" : "English";
+  const conversationHistory: ModelMessage[] = Array.isArray(history) ? history : [];
 
   //ลองใช้โมเดล Gemini ก่อน
   try {
     const data = await runAgent(
       google("gemini-2.5-flash"),
+      conversationHistory,
       message,
       replyLanguage,
       locale,
@@ -89,6 +98,7 @@ export async function POST(req: Request) {
     try {
       const data = await runAgent(
         groq("llama-3.3-70b-versatile"),
+        conversationHistory,
         message,
         replyLanguage,
         locale,
