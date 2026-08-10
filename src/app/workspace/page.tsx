@@ -21,6 +21,34 @@ type Message = {
 
 type FieldValues = Record<ShipmentFieldKey, string | null>;
 
+function FieldInput({
+  label,
+  value,
+  flashing,
+  onChange,
+}: Readonly<{
+  label: string;
+  value: string | null;
+  flashing: boolean;
+  onChange: (value: string) => void;
+}>) {
+  return (
+    <label className="flex flex-col gap-1.5 text-sm">
+      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </span>
+      <input
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="—"
+        className={`h-11 border border-border px-3 text-sm text-foreground outline-none transition-colors duration-700 focus:border-foreground ${
+          flashing ? "bg-accent" : "bg-background"
+        }`}
+      />
+    </label>
+  );
+}
+
 const EMPTY_VALUES: FieldValues = {
   senderName: null,
   senderAddress: null,
@@ -53,6 +81,7 @@ export default function Workspace() {
     senderAddress: profile?.address ?? null,
   }));
   const [replyLocale, setReplyLocale] = useState<"th" | "en" | null>(null);
+  const [flashingFields, setFlashingFields] = useState<Set<ShipmentFieldKey>>(new Set());
 
   async function handleSend(e: FormEvent) {
     e.preventDefault();
@@ -78,6 +107,12 @@ export default function Workspace() {
       const data = await res.json();
 
       if (Array.isArray(data.updates)) {
+        const updatedKeys = (data.updates as { field: string; value: string }[])
+          .map((update) => update.field)
+          .filter((field): field is ShipmentFieldKey =>
+            (SHIPMENT_FIELD_KEYS as readonly string[]).includes(field),
+          );
+
         setValues((prev) => {
           const next = { ...prev };
           for (const update of data.updates as { field: string; value: string }[]) {
@@ -87,6 +122,11 @@ export default function Workspace() {
           }
           return next;
         });
+
+        // Briefly highlight the fields the agent just filled, so it reads
+        // as "something happened here" rather than values silently popping in.
+        setFlashingFields(new Set(updatedKeys));
+        setTimeout(() => setFlashingFields(new Set()), 900);
       }
 
       setMessages((prev) => [
@@ -194,22 +234,13 @@ export default function Workspace() {
             {t.workspace.fields.slice(0, SENDER_FIELD_COUNT).map((label, i) => {
               const key = SHIPMENT_FIELD_KEYS[i];
               return (
-                <label key={key} className="flex flex-col gap-1.5 text-sm">
-                  <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    {label}
-                  </span>
-                  <input
-                    value={values[key] ?? ""}
-                    onChange={(e) =>
-                      setValues((prev) => ({
-                        ...prev,
-                        [key]: e.target.value || null,
-                      }))
-                    }
-                    placeholder="—"
-                    className="h-11 border border-border bg-background px-3 text-sm text-foreground outline-none focus:border-foreground"
-                  />
-                </label>
+                <FieldInput
+                  key={key}
+                  label={label}
+                  value={values[key]}
+                  flashing={flashingFields.has(key)}
+                  onChange={(value) => setValues((prev) => ({ ...prev, [key]: value || null }))}
+                />
               );
             })}
           </div>
@@ -221,22 +252,13 @@ export default function Workspace() {
             {t.workspace.fields.slice(SENDER_FIELD_COUNT).map((label, i) => {
               const key = SHIPMENT_FIELD_KEYS[SENDER_FIELD_COUNT + i];
               return (
-                <label key={key} className="flex flex-col gap-1.5 text-sm">
-                  <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    {label}
-                  </span>
-                  <input
-                    value={values[key] ?? ""}
-                    onChange={(e) =>
-                      setValues((prev) => ({
-                        ...prev,
-                        [key]: e.target.value || null,
-                      }))
-                    }
-                    placeholder="—"
-                    className="h-11 border border-border bg-background px-3 text-sm text-foreground outline-none focus:border-foreground"
-                  />
-                </label>
+                <FieldInput
+                  key={key}
+                  label={label}
+                  value={values[key]}
+                  flashing={flashingFields.has(key)}
+                  onChange={(value) => setValues((prev) => ({ ...prev, [key]: value || null }))}
+                />
               );
             })}
           </div>

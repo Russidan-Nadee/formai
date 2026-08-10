@@ -51,7 +51,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       chatPlaceholder: "Type a message...",
       exampleLabel: "Example",
       exampleText:
-        "Shipping clothes to John Doe in the US, at 123 Main St, New York. Worth about 2000 baht, weighs a bit over a kilo.",
+        "Shipping clothes to John Doe in the US, zip code 10001, at 123 Main St. Contact +1 212 555 0100. Worth about 2000 baht, weighs 5 lbs.",
       cannedReply: "Got it — I'll factor that into the form.",
       send: "Send",
       formTitle: "Form preview",
@@ -70,7 +70,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         "Contact",
         "Item description",
         "Weight (kg)",
-        "Declared value",
+        "Declared value (THB)",
       ],
     },
     howItWorks: {
@@ -131,7 +131,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       chatPlaceholder: "พิมพ์ข้อความ...",
       exampleLabel: "ตัวอย่าง",
       exampleText:
-        "ส่งเสื้อผ้าไปหา John Doe ที่อเมริกา อยู่ 123 Main St, New York มูลค่าประมาณ 2000 บาท หนักสักกิโลกว่าๆ",
+        "ส่งเสื้อผ้าไปหา John Doe ที่สหรัฐอเมริกา รหัสไปรษณีย์ 10001 อยู่ 123 Main St เบอร์ติดต่อ +1 212 555 0100 มูลค่าประมาณ 2000 บาท หนัก 5 ปอนด์",
       cannedReply: "รับทราบครับ จะเอาไปใช้กรอกฟอร์มให้",
       send: "ส่ง",
       formTitle: "พรีวิวฟอร์ม",
@@ -150,7 +150,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         "ติดต่อ",
         "รายละเอียดสินค้า",
         "น้ำหนัก (กก.)",
-        "มูลค่าสินค้า",
+        "มูลค่าสินค้า (บาท)",
       ],
     },
     howItWorks: {
