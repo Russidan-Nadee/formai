@@ -90,7 +90,13 @@ function rotate(p: Vec3, spin: number, tilt: number): Vec3 {
   return { x, y, z };
 }
 
-export function ThinkingOrb({ className }: { className?: string }) {
+export function ThinkingOrb({
+  className,
+  intensity = 1,
+}: {
+  className?: string;
+  intensity?: number;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -162,7 +168,7 @@ export function ThinkingOrb({ className }: { className?: string }) {
         const pa = projected[a];
         const pb = projected[b];
         const t = Math.max(0, Math.min(1, ((pa.depth + pb.depth) / 2 - 2) / 4));
-        ctx!.strokeStyle = `rgba(10,10,10,${(0.15 + t * 0.35).toFixed(3)})`;
+        ctx!.strokeStyle = `rgba(10,10,10,${Math.min(1, (0.15 + t * 0.35) * intensity).toFixed(3)})`;
         ctx!.beginPath();
         ctx!.moveTo(pa.x, pa.y);
         ctx!.lineTo(pb.x, pb.y);
@@ -174,14 +180,17 @@ export function ThinkingOrb({ className }: { className?: string }) {
         const radius = nodeUnit * (0.6 + t * 0.7);
 
         const glow = ctx!.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, radius * 3);
-        glow.addColorStop(0, `rgba(10,10,10,${(0.18 + t * 0.22).toFixed(3)})`);
+        glow.addColorStop(
+          0,
+          `rgba(10,10,10,${Math.min(1, (0.18 + t * 0.22) * intensity).toFixed(3)})`,
+        );
         glow.addColorStop(1, "rgba(10,10,10,0)");
         ctx!.fillStyle = glow;
         ctx!.beginPath();
         ctx!.arc(pr.x, pr.y, radius * 3, 0, Math.PI * 2);
         ctx!.fill();
 
-        ctx!.fillStyle = `rgba(10,10,10,${(0.6 + t * 0.4).toFixed(3)})`;
+        ctx!.fillStyle = `rgba(10,10,10,${Math.min(1, (0.6 + t * 0.4) * intensity).toFixed(3)})`;
         ctx!.beginPath();
         ctx!.arc(pr.x, pr.y, radius, 0, Math.PI * 2);
         ctx!.fill();

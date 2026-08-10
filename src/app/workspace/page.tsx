@@ -7,7 +7,11 @@ import { useState, type FormEvent } from "react";
 import { LanguageToggle } from "@/components/language-toggle";
 import { useLanguage } from "@/components/language-provider";
 import { ThinkingOrb } from "@/components/thinking-orb";
-import { SHIPMENT_FIELD_KEYS, type ShipmentFieldKey } from "@/lib/shipment-fields";
+import {
+  SHIPMENT_FIELD_KEYS,
+  SENDER_FIELD_COUNT,
+  type ShipmentFieldKey,
+} from "@/lib/shipment-fields";
 
 type Message = {
   id: number;
@@ -18,6 +22,8 @@ type Message = {
 type FieldValues = Record<ShipmentFieldKey, string | null>;
 
 const EMPTY_VALUES: FieldValues = {
+  senderName: null,
+  senderAddress: null,
   recipientName: null,
   destinationCountry: null,
   shippingAddress: null,
@@ -33,7 +39,14 @@ export default function Workspace() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isThinking, setIsThinking] = useState(false);
-  const [values, setValues] = useState<FieldValues>(EMPTY_VALUES);
+  // The sender's own name and address are already known from the profile
+  // they picked before entering the chat — no reason to make them (or the
+  // agent) fill those in again.
+  const [values, setValues] = useState<FieldValues>(() => ({
+    ...EMPTY_VALUES,
+    senderName: profile?.name ?? null,
+    senderAddress: profile?.address ?? null,
+  }));
   const [replyLocale, setReplyLocale] = useState<"th" | "en" | null>(null);
 
   async function handleSend(e: FormEvent) {
@@ -55,7 +68,7 @@ export default function Workspace() {
       const res = await fetch("/api/agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, replyLocale: locale }),
+        body: JSON.stringify({ message: text, replyLocale: locale, profile }),
       });
       const data = await res.json();
 
@@ -86,7 +99,7 @@ export default function Workspace() {
   }
 
   return (
-    <div className="flex min-h-dvh flex-col bg-background text-foreground">
+    <div className="flex h-dvh flex-col overflow-hidden bg-background text-foreground">
       <div className="flex items-center justify-between border-b border-border px-6 py-4">
         <Link
           href="/"
@@ -105,9 +118,10 @@ export default function Workspace() {
         <LanguageToggle />
       </div>
 
-      <div className="flex flex-1 flex-col md:flex-row">
-        <div className="flex flex-1 flex-col border-b border-border md:border-b-0 md:border-r">
-          <h2 className="border-b border-border px-6 py-4 font-heading text-lg">
+      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+        <div className="flex min-h-0 flex-1 flex-col border-b border-border md:border-b-0 md:border-r">
+          <h2 className="flex items-center gap-2 border-b border-border px-6 py-4 font-heading text-lg">
+            <ThinkingOrb className="h-10 w-10 shrink-0" intensity={1.8} />
             {t.workspace.chatTitle}
           </h2>
 
@@ -165,11 +179,42 @@ export default function Workspace() {
           </form>
         </div>
 
-        <div className="flex-1 p-6">
+        <div className="min-h-0 flex-1 overflow-y-auto p-6">
           <h2 className="mb-4 font-heading text-lg">{t.workspace.formTitle}</h2>
-          <div className="flex flex-col gap-4">
-            {t.workspace.fields.map((label, i) => {
+
+          <h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+            {t.workspace.senderSection}
+          </h3>
+          <div className="mb-6 flex flex-col gap-4">
+            {t.workspace.fields.slice(0, SENDER_FIELD_COUNT).map((label, i) => {
               const key = SHIPMENT_FIELD_KEYS[i];
+              return (
+                <label key={key} className="flex flex-col gap-1.5 text-sm">
+                  <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    {label}
+                  </span>
+                  <input
+                    value={values[key] ?? ""}
+                    onChange={(e) =>
+                      setValues((prev) => ({
+                        ...prev,
+                        [key]: e.target.value || null,
+                      }))
+                    }
+                    placeholder="—"
+                    className="h-11 border border-border bg-background px-3 text-sm text-foreground outline-none focus:border-foreground"
+                  />
+                </label>
+              );
+            })}
+          </div>
+
+          <h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+            {t.workspace.shipmentSection}
+          </h3>
+          <div className="flex flex-col gap-4">
+            {t.workspace.fields.slice(SENDER_FIELD_COUNT).map((label, i) => {
+              const key = SHIPMENT_FIELD_KEYS[SENDER_FIELD_COUNT + i];
               return (
                 <label key={key} className="flex flex-col gap-1.5 text-sm">
                   <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">

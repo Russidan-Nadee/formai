@@ -7,14 +7,27 @@ import { SHIPMENT_FIELD_KEYS } from "@/lib/shipment-fields";
 
 const google = createGoogleGenerativeAI({ apiKey: process.env.GEMINI_API_KEY });
 
-async function runAgent(model: LanguageModel, message: string, replyLanguage: string) {
+type SenderProfile = { name: string; business: string; address: string } | undefined;
+
+async function runAgent(
+  model: LanguageModel,
+  message: string,
+  replyLanguage: string,
+  profile: SenderProfile,
+) {
   const updates: { field: string; value: string }[] = [];
+
+  const senderContext = profile
+    ? `The sender is ${profile.name}, who runs a ${profile.business}, based at ${profile.address}. senderName and senderAddress are already filled in with this information — do not ask about them or refill them unless the message explicitly gives different sender details.`
+    : "The sender's identity is not known yet.";
 
   const result = await generateText({
     model,
     system: `You are FormAI, an agent that reads a customer's message about an international shipment and fills out a form by calling the fill_form_field tool.
 
 The only fields that exist are: ${SHIPMENT_FIELD_KEYS.join(", ")}.
+
+${senderContext}
 
 Call fill_form_field once for each field you can confidently determine from the message. Do not guess or invent values.
 
@@ -43,18 +56,18 @@ Always reply in ${replyLanguage}, regardless of what language the user's message
 }
 
 export async function POST(req: Request) {
-  const { message, replyLocale } = await req.json();
+  const { message, replyLocale, profile } = await req.json();
   const replyLanguage = replyLocale === "th" ? "Thai" : "English";
 
   //ลองใช้โมเดล Gemini ก่อน
   try {
-    const data = await runAgent(google("gemini-2.5-flash"), message, replyLanguage);
+    const data = await runAgent(google("gemini-2.5-flash"), message, replyLanguage, profile);
     return NextResponse.json(data);
   } catch (error) {
     console.error("Gemini failed, falling back to Groq:", error);
     // ถ้า Gemini error ลองใช้โมเดล Groq แทน
     try {
-      const data = await runAgent(groq("llama-3.3-70b-versatile"), message, replyLanguage);
+      const data = await runAgent(groq("llama-3.3-70b-versatile"), message, replyLanguage, profile);
       return NextResponse.json(data);
     } catch (fallbackError) {
       console.error("Groq fallback also failed:", fallbackError);

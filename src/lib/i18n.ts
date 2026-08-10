@@ -20,6 +20,8 @@ export type Dictionary = {
     cannedReply: string;
     send: string;
     formTitle: string;
+    senderSection: string;
+    shipmentSection: string;
     fields: string[];
   };
   howItWorks: {
@@ -30,7 +32,7 @@ export type Dictionary = {
     title: string;
     subtitle: string;
     sendingAs: string;
-    profiles: { name: string; business: string }[];
+    profiles: { name: string; business: string; address: string }[];
   };
 };
 
@@ -53,7 +55,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
       cannedReply: "Got it — I'll factor that into the form.",
       send: "Send",
       formTitle: "Form preview",
+      senderSection: "Sender",
+      shipmentSection: "Recipient & shipment",
       fields: [
+        "Sender name",
+        "Sender address",
         "Recipient name",
         "Destination country",
         "Shipping address",
@@ -81,13 +87,29 @@ export const dictionaries: Record<Locale, Dictionary> = {
     },
     profilePicker: {
       title: "Who's sending?",
-      subtitle: "Pick a profile — the agent will already know your details.",
+      subtitle: "Pick a profile, The agent will already know your details.",
       sendingAs: "Sending as",
       profiles: [
-        { name: "John Doe", business: "Online clothing shop" },
-        { name: "Jane Doe", business: "Premium gift shop" },
-        { name: "Acme Trading Co.", business: "Industrial parts supplier" },
-        { name: "Alex Doe", business: "Cosmetics seller" },
+        {
+          name: "John Doe",
+          business: "Online clothing shop",
+          address: "88 Sukhumvit Road, Bangkok 10110, Thailand",
+        },
+        {
+          name: "Jane Doe",
+          business: "Premium gift shop",
+          address: "12 Nimman Road, Chiang Mai 50200, Thailand",
+        },
+        {
+          name: "Acme Trading Co.",
+          business: "Industrial parts supplier",
+          address: "199 Bang Na-Trat Road, Bangkok 10260, Thailand",
+        },
+        {
+          name: "Alex Doe",
+          business: "Cosmetics seller",
+          address: "45 Rama IX Road, Bangkok 10310, Thailand",
+        },
       ],
     },
   },
@@ -108,7 +130,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
       cannedReply: "รับทราบครับ จะเอาไปใช้กรอกฟอร์มให้",
       send: "ส่ง",
       formTitle: "พรีวิวฟอร์ม",
+      senderSection: "ผู้ส่ง",
+      shipmentSection: "ผู้รับ & พัสดุ",
       fields: [
+        "ชื่อผู้ส่ง",
+        "ที่อยู่ผู้ส่ง",
         "ชื่อผู้รับ",
         "ประเทศปลายทาง",
         "ที่อยู่จัดส่ง",
@@ -139,10 +165,26 @@ export const dictionaries: Record<Locale, Dictionary> = {
       subtitle: "เลือกโปรไฟล์ — agent จะรู้ข้อมูลของคุณไว้ล่วงหน้าเลย",
       sendingAs: "ส่งในนาม",
       profiles: [
-        { name: "สมชาย ตัวอย่าง", business: "ร้านเสื้อผ้าออนไลน์" },
-        { name: "กมล ตัวอย่าง", business: "ร้านของฝากพรีเมียม" },
-        { name: "บริษัท ตัวอย่าง จำกัด", business: "ผู้จัดจำหน่ายอะไหล่อุตสาหกรรม" },
-        { name: "ปิยะ ตัวอย่าง", business: "ขายเครื่องสำอาง" },
+        {
+          name: "สมชาย ตัวอย่าง",
+          business: "ร้านเสื้อผ้าออนไลน์",
+          address: "88 ถนนสุขุมวิท กรุงเทพฯ 10110",
+        },
+        {
+          name: "กมล ตัวอย่าง",
+          business: "ร้านของฝากพรีเมียม",
+          address: "12 ถนนนิมมานเหมินทร์ เชียงใหม่ 50200",
+        },
+        {
+          name: "บริษัท ตัวอย่าง จำกัด",
+          business: "ผู้จัดจำหน่ายอะไหล่อุตสาหกรรม",
+          address: "199 ถนนบางนา-ตราด กรุงเทพฯ 10260",
+        },
+        {
+          name: "ปิยะ ตัวอย่าง",
+          business: "ขายเครื่องสำอาง",
+          address: "45 ถนนพระราม 9 กรุงเทพฯ 10310",
+        },
       ],
     },
   },
