@@ -1,9 +1,11 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { groq } from "@ai-sdk/groq";
-import { generateText, tool, stepCountIs, type LanguageModel } from "ai";
+import { generateText, stepCountIs, type LanguageModel } from "ai";
 import { NextResponse } from "next/server";
-import { z } from "zod";
 import { SHIPMENT_FIELD_KEYS } from "@/lib/shipment-fields";
+import { createFillFormFieldTool, type FieldUpdate } from "@/lib/tools/fill-form-field";
+import { lookupCountryTool } from "@/lib/tools/lookup-country";
+import { lookupPostcodeTool } from "@/lib/tools/lookup-postcode";
 
 const google = createGoogleGenerativeAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -15,7 +17,7 @@ async function runAgent(
   replyLanguage: string,
   profile: SenderProfile,
 ) {
-  const updates: { field: string; value: string }[] = [];
+  const updates: FieldUpdate[] = [];
 
   const senderContext = profile
     ? `The sender is ${profile.name}, who runs a ${profile.business}, based at ${profile.address}. senderName and senderAddress are already filled in with this information — do not ask about them or refill them unless the message explicitly gives different sender details.`
@@ -29,26 +31,22 @@ The only fields that exist are: ${SHIPMENT_FIELD_KEYS.join(", ")}.
 
 ${senderContext}
 
+Before filling shippingCountry, call lookup_country with the country name or code from the message to get its canonical name — if it returns not found, ask the user to clarify the country instead of filling the field.
+
+Postcodes are ambiguous across countries (the same code can belong to several), so only call lookup_postcode once shippingCountry is known — pass that country's code along with the postcode, and use the result to fill shippingCity and shippingState if they're not already known. Never use lookup_postcode to guess the country.
+
 Call fill_form_field once for each field you can confidently determine from the message. Do not guess or invent values.
 
-After filling what you can, reply with one short sentence confirming what you filled in. If recipientName, destinationCountry, or shippingAddress is still missing, ask a brief follow-up question for it.
+After filling what you can, reply with one short sentence confirming what you filled in. If recipientName, shippingCountry, or shippingAddress1 is still missing, ask a brief follow-up question for it.
 
 Always reply in ${replyLanguage}, regardless of what language the user's message is in.`,
 
     tools: {
-      fill_form_field: tool({
-        description: "Fill one field of the shipment form.",
-        inputSchema: z.object({
-          field: z.enum(SHIPMENT_FIELD_KEYS),
-          value: z.string(),
-        }),
-        execute: async ({ field, value }) => {
-          updates.push({ field, value });
-          return { ok: true };
-        },
-      }),
+      fill_form_field: createFillFormFieldTool(updates),
+      lookup_country: lookupCountryTool,
+      lookup_postcode: lookupPostcodeTool,
     },
-    stopWhen: stepCountIs(4),
+    stopWhen: stepCountIs(6),
     prompt: message,
   });
 
