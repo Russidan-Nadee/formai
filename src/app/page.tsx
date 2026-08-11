@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { LanguageToggle } from "@/components/language-toggle";
 import { useLanguage } from "@/components/language-provider";
 import { ThinkingOrb } from "@/components/thinking-orb";
+import { LandingDemo } from "@/components/landing-demo";
 
 const GITHUB_URL = "https://github.com/Russidan-Nadee/formai";
 
@@ -113,24 +114,23 @@ export default function Home() {
               {t.description}
             </p>
 
-            <div className={`flex flex-col gap-4 sm:flex-row ${fadeInClass}`} style={fadeInStyle}>
-              <Link
-                href="/profile"
-                className="flex h-12 items-center justify-center bg-primary px-6 text-base font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-              >
-                {t.ctaPrimary}
-              </Link>
-              <a
-                href="#how-it-works"
-                className="flex h-12 items-center justify-center border border-border px-6 text-base font-medium transition-colors hover:bg-accent"
-              >
-                {t.ctaSecondary}
-              </a>
-            </div>
+            <Link
+              href="/profile"
+              className={`flex h-12 w-fit items-center justify-center bg-primary px-6 text-base font-medium text-primary-foreground transition-colors hover:bg-primary/90 ${fadeInClass}`}
+              style={fadeInStyle}
+            >
+              {t.ctaPrimary}
+            </Link>
           </main>
 
           <section
-            id="how-it-works"
+            className={`mx-auto w-full max-w-3xl px-8 pb-24 sm:pb-32 ${fadeInClass}`}
+            style={fadeInStyle}
+          >
+            <LandingDemo />
+          </section>
+
+          <section
             className={`mx-auto w-full max-w-3xl px-8 pb-24 sm:pb-32 ${fadeInClass}`}
             style={fadeInStyle}
           >

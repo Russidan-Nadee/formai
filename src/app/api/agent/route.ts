@@ -80,6 +80,15 @@ Always reply in ${replyLanguage}, regardless of what language the user's message
     stopWhen: stepCountIs(10),
   });
 
+  console.log(
+    `[agent] finishReason=${result.finishReason} textLen=${result.text.length} steps=${result.steps.length} updates=${updates.length}`,
+  );
+  result.steps.forEach((step, i) => {
+    console.log(
+      `[agent]   step${i} finishReason=${step.finishReason} textLen=${step.text.length} toolCalls=${JSON.stringify(step.toolCalls.map((c) => ({ tool: c.toolName, input: c.input })))} toolResults=${JSON.stringify(step.toolResults.map((r) => r.output))}`,
+    );
+  });
+
   // Deterministic backstop, not another thing to ask the model nicely for:
   // if this turn resolved both a postcode and a country but never landed on
   // city/state (the model skipped lookup_postcode, or tried to recall them
@@ -133,7 +142,10 @@ export async function POST(req: Request) {
       );
       return NextResponse.json(data);
     } catch (error) {
-      console.error(`${name} failed:`, error);
+      const summary = APICallError.isInstance(error)
+        ? `statusCode=${error.statusCode} message=${error.message}`
+        : error;
+      console.error(`${name} failed:`, summary);
       errors.push(error);
     }
   }

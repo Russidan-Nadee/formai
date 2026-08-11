@@ -9,7 +9,6 @@ export type Dictionary = {
   heading: string[];
   description: string;
   ctaPrimary: string;
-  ctaSecondary: string;
   footerNote: string;
   workspace: {
     back: string;
@@ -32,6 +31,11 @@ export type Dictionary = {
     receiptTitle: string;
     newShipment: string;
   };
+  landingDemo: {
+    userMessage: string;
+    agentReply: string;
+    fields: { label: string; value: string }[];
+  };
   howItWorks: {
     title: string;
     steps: { title: string; description: string }[];
@@ -51,7 +55,6 @@ export const dictionaries: Record<Locale, Dictionary> = {
     description:
       "An agent that reads your data, and prefills the form for you. You only show up to confirm.",
     ctaPrimary: "Get started",
-    ctaSecondary: "How it works",
     footerNote: "Built with Next.js.",
     workspace: {
       back: "FormAI",
@@ -89,6 +92,17 @@ export const dictionaries: Record<Locale, Dictionary> = {
       shipmentSentMessage: "Shipment sent. You're all set.",
       receiptTitle: "Shipment receipt",
       newShipment: "Create another shipment",
+    },
+    landingDemo: {
+      userMessage:
+        "Shipping clothes to John Dear in the US, 123 Main St, New York. Weighs about 5 lbs.",
+      agentReply: "Got it. I filled in the recipient, address, country, and weight.",
+      fields: [
+        { label: "Recipient name", value: "John Dear" },
+        { label: "Address 1", value: "123 Main St, New York" },
+        { label: "Country", value: "United States" },
+        { label: "Weight (kg)", value: "2.3" },
+      ],
     },
     howItWorks: {
       title: "How it works",
@@ -140,7 +154,6 @@ export const dictionaries: Record<Locale, Dictionary> = {
     heading: ["AI ผู้ช่วย", "กรอกฟอร์มโดยอัตโนมัติ"],
     description: "เอเจนต์ที่อ่านข้อมูลของคุณ แล้วกรอกฟอร์มให้ล่วงหน้า คุณแค่มายืนยันอีกครั้ง",
     ctaPrimary: "เริ่มต้นใช้งาน",
-    ctaSecondary: "วิธีการทำงาน",
     footerNote: "สร้างด้วย Next.js",
     workspace: {
       back: "FormAI",
@@ -178,6 +191,17 @@ export const dictionaries: Record<Locale, Dictionary> = {
       shipmentSentMessage: "ส่งพัสดุเรียบร้อยแล้วครับ",
       receiptTitle: "ใบเสร็จการส่งพัสดุ",
       newShipment: "สร้างพัสดุใหม่",
+    },
+    landingDemo: {
+      userMessage:
+        "ส่งเสื้อผ้าไปหา John Dear ที่สหรัฐอเมริกา อยู่ 123 Main St, New York หนักประมาณ 5 ปอนด์",
+      agentReply: "รับทราบครับ กรอกชื่อผู้รับ ที่อยู่ ประเทศ และน้ำหนักให้เรียบร้อยแล้ว",
+      fields: [
+        { label: "ชื่อผู้รับ", value: "John Dear" },
+        { label: "ที่อยู่ 1", value: "123 Main St, New York" },
+        { label: "ประเทศ", value: "United States" },
+        { label: "น้ำหนัก (กก.)", value: "2.3" },
+      ],
     },
     howItWorks: {
       title: "วิธีการทำงาน",
