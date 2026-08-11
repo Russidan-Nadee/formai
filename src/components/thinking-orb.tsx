@@ -93,10 +93,10 @@ function rotate(p: Vec3, spin: number, tilt: number): Vec3 {
 export function ThinkingOrb({
   className,
   intensity = 1,
-}: {
+}: Readonly<{
   className?: string;
   intensity?: number;
-}) {
+}>) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -133,7 +133,8 @@ export function ThinkingOrb({
 
     // Random spin rate (0.15–0.6 rad/s) and direction, picked fresh each
     // time the orb mounts so it doesn't always turn at the same speed.
-    const spinRate = (Math.random() * 0.45 + 0.15) * (Math.random() < 0.5 ? 1 : -1);
+    // Purely decorative randomness, not security-sensitive — Math.random is fine.
+    const spinRate = (Math.random() * 0.45 + 0.15) * (Math.random() < 0.5 ? 1 : -1); // NOSONAR
 
     function frame(now: number) {
       const elapsed = (now - start) / 1000;
@@ -196,12 +197,14 @@ export function ThinkingOrb({
         ctx!.fill();
       }
 
-      if (!reduceMotion && now - lastSpawn > 300 && signals.length < 4 && Math.random() < 0.5) {
+      const shouldSpawnSignal =
+        !reduceMotion && now - lastSpawn > 300 && signals.length < 4 && Math.random() < 0.5; // NOSONAR (decorative, not security-sensitive)
+      if (shouldSpawnSignal) {
         lastSpawn = now;
         signals.push({
-          edge: edges[(Math.random() * edges.length) | 0],
+          edge: edges[Math.trunc(Math.random() * edges.length)], // NOSONAR (decorative, not security-sensitive)
           t0: now,
-          dur: 700 + Math.random() * 400,
+          dur: 700 + Math.random() * 400, // NOSONAR (decorative, not security-sensitive)
         });
       }
       for (let i = signals.length - 1; i >= 0; i--) {
@@ -237,5 +240,5 @@ export function ThinkingOrb({
     };
   }, []);
 
-  return <canvas ref={canvasRef} aria-hidden="true" className={className} />;
+  return <canvas ref={canvasRef} aria-hidden="true" tabIndex={-1} className={className} />;
 }

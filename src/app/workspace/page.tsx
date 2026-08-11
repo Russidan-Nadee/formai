@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState, type SubmitEvent } from "react";
+import { Suspense, useEffect, useRef, useState, type SubmitEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { LanguageToggle } from "@/components/language-toggle";
 import { useLanguage } from "@/components/language-provider";
@@ -19,20 +19,23 @@ const EASE = [0.16, 1, 0.3, 1] as const;
 
 // Splits by grapheme cluster (not raw code point) so Thai combining marks
 // stay attached to their base consonant instead of animating separately.
-function graphemes(text: string): string[] {
-  if (typeof Intl !== "undefined" && "Segmenter" in Intl) {
-    const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
-    return Array.from(segmenter.segment(text), (s) => s.segment);
-  }
-  return Array.from(text);
+function graphemes(text: string): { char: string; key: string }[] {
+  const segments =
+    typeof Intl !== "undefined" && "Segmenter" in Intl
+      ? Array.from(
+          new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(text),
+          (s) => s.segment,
+        )
+      : Array.from(text);
+  return segments.map((char, i) => ({ char, key: `${i}-${char}` }));
 }
 
 function WaveText({ text, className }: Readonly<{ text: string; className?: string }>) {
   return (
     <span className={className}>
-      {graphemes(text).map((char, i) => (
+      {graphemes(text).map(({ char, key }, i) => (
         <span
-          key={i}
+          key={key}
           className="inline-block animate-[wave_1.2s_ease-in-out_infinite]"
           style={{ animationDelay: `${i * 80}ms` }}
         >
@@ -115,6 +118,14 @@ const EMPTY_VALUES: FieldValues = {
 };
 
 export default function Workspace() {
+  return (
+    <Suspense fallback={null}>
+      <WorkspaceContent />
+    </Suspense>
+  );
+}
+
+function WorkspaceContent() {
   const { t } = useLanguage();
   const searchParams = useSearchParams();
   const profile = t.profilePicker.profiles[Number(searchParams.get("profile"))];
