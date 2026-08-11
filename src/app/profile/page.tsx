@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, UserRound } from "lucide-react";
 import { motion } from "framer-motion";
 import { LanguageToggle } from "@/components/language-toggle";
 import { useLanguage } from "@/components/language-provider";
@@ -65,11 +65,16 @@ export default function ProfilePicker() {
             >
               <Link
                 href={`/workspace?profile=${i}`}
-                className="flex h-full flex-col gap-1 border border-border p-6 text-left transition-colors hover:bg-accent"
+                className="flex h-full items-center gap-4 border border-border p-6 text-left transition-colors hover:bg-accent"
               >
-                <span className="font-heading text-lg">{profile.name}</span>
-                <span className="text-sm text-muted-foreground">{profile.business}</span>
-                <span className="mt-1 text-xs text-muted-foreground">{profile.address}</span>
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-border">
+                  <UserRound className="h-5 w-5" />
+                </span>
+                <span className="flex flex-col gap-1">
+                  <span className="font-heading text-lg">{profile.name}</span>
+                  <span className="text-sm text-muted-foreground">{profile.business}</span>
+                  <span className="mt-1 text-xs text-muted-foreground">{profile.address}</span>
+                </span>
               </Link>
             </motion.div>
           ))}
