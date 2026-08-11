@@ -34,6 +34,7 @@ const spaceMono = Space_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://formai-self.vercel.app"),
   title: "FormAI",
   description: "Agentic prefill assistant",
 };
