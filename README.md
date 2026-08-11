@@ -12,7 +12,9 @@ An agent that reads what you type, and prefills a shipment form for you. You onl
 
 ## Demo
 
-<video src="https://raw.githubusercontent.com/Russidan-Nadee/formai/master/.github/assets/demo.mp4" controls muted width="100%"></video>
+[![FormAI](src/app/opengraph-image.png)](https://formai-self.vercel.app)
+
+[Watch the demo video](.github/assets/demo.mp4)
 
 ## How it works
 
@@ -52,7 +54,6 @@ cp .env.example .env
 
 | Variable            | Description                                                                    |
 | ------------------- | ------------------------------------------------------------------------------ |
-| `DATABASE_URL`      | PostgreSQL connection string                                                   |
 | `GEMINI_API_KEY`    | Google AI Studio API key                                                       |
 | `GROQ_API_KEY`      | Groq API key, used as a fallback model                                         |
 | `GEONAMES_USERNAME` | [GeoNames](https://www.geonames.org/login) username, used for postcode lookups |
