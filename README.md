@@ -12,9 +12,7 @@ An agent that reads what you type, and prefills a shipment form for you. You onl
 
 ## Demo
 
-[![FormAI](src/app/opengraph-image.png)](https://formai-self.vercel.app)
-
-[Watch the demo video](.github/assets/demo.mp4)
+![FormAI demo](.github/assets/demo.gif)
 
 ## How it works
 
