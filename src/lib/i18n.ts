@@ -64,7 +64,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       thinking: "Thinking",
       exampleLabel: "Example",
       exampleText:
-        "Shipping clothes to John Dear in the US, zip code 10001, at 123 Main St. Contact +1 212 555 0100. Worth about 2000 baht, weighs 5 lbs.",
+        "Shipping clothes to John Dear in the US, zip code 10001, at 123 Main St. Contact +1 212 555 0100. Worth about 2000 baht, weighs 5 lbs. and fill the full detail",
       cannedReply: "Got it — I'll factor that into the form.",
       quotaExceededReply:
         "The assistant has hit its usage limit for now. Please try again in a few minutes.",
@@ -163,7 +163,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       thinking: "กำลังคิด",
       exampleLabel: "ตัวอย่าง",
       exampleText:
-        "ส่งเสื้อผ้าไปหา John Dear ที่สหรัฐอเมริกา รหัสไปรษณีย์ 10001 อยู่ 123 Main St เบอร์ติดต่อ +1 212 555 0100 มูลค่าประมาณ 2000 บาท หนัก 5 ปอนด์",
+        "ส่งเสื้อผ้าไปหา John Dear ที่สหรัฐอเมริกา รหัสไปรษณีย์ 10001 อยู่ 123 Main St เบอร์ติดต่อ +1 212 555 0100 มูลค่าประมาณ 2000 บาท หนัก 5 ปอนด์ และกรอกรายละเอียดให้ครบถ้วน",
       cannedReply: "รับทราบครับ จะเอาไปใช้กรอกฟอร์มให้",
       quotaExceededReply:
         "ตอนนี้ระบบผู้ช่วยใช้งานเกินโควตาชั่วคราว กรุณาลองใหม่อีกครั้งในอีกไม่กี่นาที",
